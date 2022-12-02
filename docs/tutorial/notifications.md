@@ -90,10 +90,45 @@ to call [`app.setAppUserModelId()`][set-app-user-model-id] yourself.
 #### Advanced Notifications
 
 Later versions of Windows allow for advanced notifications, with custom templates,
-images, and other flexible elements. To send those notifications (from either the
-main process or the renderer process), use the userland module
-[electron-windows-notifications](https://github.com/felixrieseberg/electron-windows-notifications),
-which uses native Node addons to send `ToastNotification` and `TileNotification` objects.
+images, and other flexible elements. To send those notifications (from either the main process or the renderer process),
+use the `toastXML` property of the `Notification API`.
+
+Windows offers various templates for generating `ToastNotifications`. To find out which template fits your needs, read more about `ToastNotifications` in [Microsoft's documentation](https://docs.microsoft.com/en-us/windows/apps/design/shell/tiles-and-notifications/adaptive-interactive-toasts?tabs=xml).
+
+
+Using the example above, this is an example using the `toastXML` property for sending Notifications in Windows via the Main process.
+For adding buttons to your notifications, add an `actions` tag with one or more `action` tags inside. For reacting to button clicks in `ToastNotifications`,
+use the activationType `protocol` and set your uri ino the `arguments` property. To handle a custom protocol, follow the [deep-linking tutorial][tutorial-deep-linking].
+```javascript fiddle='docs/fiddles/features/notifications/main-window'
+const { Notification } = require('electron')
+
+const NOTIFICATION_TITLE = 'Basic Notification'
+const NOTIFICATION_BODY = 'Notification from the Main process'
+
+const showNotification = () => {
+  new Notification({
+    toast: `<toast>
+      <visual>
+        <binding template="ToastText02">
+          <text>${NOTIFICATION_TITLE}</text>
+          <text>${NOTIFICATION_BODY}</text>
+        </binding>
+      </visual>
+      <actions>
+        <action content="Action 1" activationType="protocol" arguments="my-electron-app://action1" />
+        <action content="Action 2" activationType="protocol" arguments="my-electron-app://action2" />
+      </actions>
+   </toast>`
+  }).show()
+}
+
+app.whenReady().then(createWindow).then(showNotification)
+```
+
+#### Using modules
+
+The userland module
+[electron-windows-notifications](https://github.com/felixrieseberg/electron-windows-notifications) uses native Node addons to send `ToastNotification` and `TileNotification` objects.
 
 While notifications including buttons work with `electron-windows-notifications`,
 handling replies requires the use of
@@ -139,3 +174,4 @@ GNOME, KDE.
 [app-user-model-id]: https://msdn.microsoft.com/en-us/library/windows/desktop/dd378459(v=vs.85).aspx
 [set-app-user-model-id]: ../api/app.md#appsetappusermodelidid-windows
 [squirrel-events]: https://github.com/electron/windows-installer/blob/master/README.md#handling-squirrel-events
+[tutorial-deep-linking]: ../tutorial/launch-app-from-url-in-another-app.md
